@@ -83,4 +83,31 @@ class OficinaControllerTest {
 
 		verify(oficinaBusinessProcess).listarInscricoes();
 	}
+	@Test
+	void buscaParticipanteExistentePorId() throws Exception {
+	    when(oficinaBusinessProcess.buscarParticipantePorId(1L))
+	            .thenReturn(List.of(Map.of(
+	                    "id", 1L,
+	                    "nome", "Ana Lima",
+	                    "email", "ana@example.com")));
+
+	    mockMvc.perform(get("/api/participantes/1"))
+	            .andExpect(status().isOk())
+	            .andExpect(jsonPath("$.id").value(1))
+	            .andExpect(jsonPath("$.nome").value("Ana Lima"))
+	            .andExpect(jsonPath("$.email").value("ana@example.com"));
+
+	    verify(oficinaBusinessProcess).buscarParticipantePorId(1L);
+	}
+
+	@Test
+	void retorna404ParaParticipanteInexistente() throws Exception {
+	    when(oficinaBusinessProcess.buscarParticipantePorId(999999L))
+	            .thenReturn(List.of());
+
+	    mockMvc.perform(get("/api/participantes/999999"))
+	            .andExpect(status().isNotFound());
+
+	    verify(oficinaBusinessProcess).buscarParticipantePorId(999999L);
+	}
 }

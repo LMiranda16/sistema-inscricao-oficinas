@@ -18,4 +18,8 @@ public class ParticipanteRepository {
 	public List<Map<String, Object>> listarTodos() {
 		return jdbcTemplate.queryForList("SELECT * FROM participantes");
 	}
+	public List<Map<String, Object>> buscarPorId(Long id) {
+        String sql = "SELECT * FROM participantes WHERE id = ?";
+        return jdbcTemplate.queryForList(sql, id);
+    }
 }
