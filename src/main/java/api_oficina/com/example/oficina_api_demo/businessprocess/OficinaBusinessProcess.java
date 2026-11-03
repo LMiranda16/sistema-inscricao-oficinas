@@ -32,6 +32,10 @@ public class OficinaBusinessProcess {
 	public List<Map<String, Object>> listarOficinas() {
 		return oficinaRepository.listarTodos();
 	}
+	
+	public List<Map<String, Object>> buscarOficinaPorId(Long id) {
+	    return oficinaRepository.buscarPorId(id);
+	}
 
 	public List<Map<String, Object>> listarInscricoes() {
 		return inscricaoRepository.listarTodos();

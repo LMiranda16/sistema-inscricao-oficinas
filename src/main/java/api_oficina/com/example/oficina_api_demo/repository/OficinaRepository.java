@@ -18,4 +18,8 @@ public class OficinaRepository {
 	public List<Map<String, Object>> listarTodos() {
 		return jdbcTemplate.queryForList("SELECT * FROM oficinas");
 	}
+	public List<Map<String, Object>> buscarPorId(Long id) {
+	    String sql = "SELECT * FROM oficinas WHERE id = ?";
+	    return jdbcTemplate.queryForList(sql, id);
+	}
 }
