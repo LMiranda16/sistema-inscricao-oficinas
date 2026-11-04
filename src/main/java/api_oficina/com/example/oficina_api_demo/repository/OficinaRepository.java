@@ -18,4 +18,19 @@ public class OficinaRepository {
 	public List<Map<String, Object>> listarTodos() {
 		return jdbcTemplate.queryForList("SELECT * FROM oficinas");
 	}
+	
+	public int diminuirVaga(Long oficinaId) {
+	    String sql = "UPDATE oficinas "
+	            + "SET vagas_disponiveis = vagas_disponiveis - 1 "
+	            + "WHERE id = ? AND vagas_disponiveis > 0";
+
+	    return jdbcTemplate.update(sql, oficinaId);
+	}
+	public boolean existePorId(Long id) {
+	    String sql = "SELECT COUNT(*) FROM oficinas WHERE id = ?";
+
+	    Integer quantidade = jdbcTemplate.queryForObject(sql, Integer.class, id);
+
+	    return quantidade != null && quantidade > 0;
+	}
 }

@@ -1,6 +1,7 @@
 package api_oficina.com.example.oficina_api_demo.businessprocess;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import api_oficina.com.example.oficina_api_demo.repository.InscricaoRepository;
 import api_oficina.com.example.oficina_api_demo.repository.OficinaRepository;
 import api_oficina.com.example.oficina_api_demo.repository.ParticipanteRepository;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class OficinaBusinessProcessTest {
@@ -68,5 +76,58 @@ class OficinaBusinessProcessTest {
 
 		assertSame(inscricoes, oficinaBusinessProcess.listarInscricoes());
 		verify(inscricaoRepository).listarTodos();
+	}
+	@Test
+	void registraInscricaoQuandoHaVaga() {
+	    when(participanteRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.diminuirVaga(1L)).thenReturn(1);
+	    when(inscricaoRepository.existeInscricaoAtiva(1L, 1L)).thenReturn(false);
+
+	    oficinaBusinessProcess.registrarInscricao(1L, 1L);
+
+	    verify(oficinaRepository).diminuirVaga(1L);
+	    verify(inscricaoRepository).registrar(1L, 1L);
+	}
+
+	@Test
+	void naoRegistraQuandoParticipanteNaoExiste() {
+	    when(participanteRepository.existePorId(99L)).thenReturn(false);
+
+	    ResponseStatusException erro = assertThrows(
+	            ResponseStatusException.class,
+	            () -> oficinaBusinessProcess.registrarInscricao(99L, 1L));
+
+	    assertEquals(HttpStatus.NOT_FOUND, erro.getStatusCode());
+	    verify(inscricaoRepository, never()).registrar(99L, 1L);
+	}
+
+	@Test
+	void naoRegistraQuandoOficinaNaoTemVagas() {
+	    when(participanteRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.diminuirVaga(1L)).thenReturn(0);
+
+	    ResponseStatusException erro = assertThrows(
+	            ResponseStatusException.class,
+	            () -> oficinaBusinessProcess.registrarInscricao(1L, 1L));
+
+	    assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+	    verify(inscricaoRepository, never()).registrar(1L, 1L);
+	}
+
+	@Test
+	void naoRegistraInscricaoDuplicada() {
+	    when(participanteRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.existePorId(1L)).thenReturn(true);
+	    when(oficinaRepository.diminuirVaga(1L)).thenReturn(1);
+	    when(inscricaoRepository.existeInscricaoAtiva(1L, 1L)).thenReturn(true);
+
+	    ResponseStatusException erro = assertThrows(
+	            ResponseStatusException.class,
+	            () -> oficinaBusinessProcess.registrarInscricao(1L, 1L));
+
+	    assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+	    verify(inscricaoRepository, never()).registrar(1L, 1L);
 	}
 }

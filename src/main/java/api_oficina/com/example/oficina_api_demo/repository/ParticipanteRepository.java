@@ -18,4 +18,12 @@ public class ParticipanteRepository {
 	public List<Map<String, Object>> listarTodos() {
 		return jdbcTemplate.queryForList("SELECT * FROM participantes");
 	}
+	
+	public boolean existePorId(Long id) {
+	    String sql = "SELECT COUNT(*) FROM participantes WHERE id = ?";
+
+	    Integer quantidade = jdbcTemplate.queryForObject(sql, Integer.class, id);
+
+	    return quantidade != null && quantidade > 0;
+	}
 }

@@ -19,6 +19,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import api_oficina.com.example.oficina_api_demo.businessprocess.OficinaBusinessProcess;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
+import org.springframework.http.MediaType;
+
 @ExtendWith(MockitoExtension.class)
 class OficinaControllerTest {
 
@@ -82,5 +86,21 @@ class OficinaControllerTest {
 				.andExpect(jsonPath("$[0].situacao").value("ATIVA"));
 
 		verify(oficinaBusinessProcess).listarInscricoes();
+	}
+	@Test
+	void registraInscricao() throws Exception {
+	    String json = """
+	            {
+	                "participante_id": 1,
+	                "oficina_id": 1
+	            }
+	            """;
+
+	    mockMvc.perform(post("/api/inscricoes")
+	            .contentType(MediaType.APPLICATION_JSON)
+	            .content(json))
+	            .andExpect(status().isCreated());
+
+	    verify(oficinaBusinessProcess).registrarInscricao(1L, 1L);
 	}
 }

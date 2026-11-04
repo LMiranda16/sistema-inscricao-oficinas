@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import api_oficina.com.example.oficina_api_demo.businessprocess.OficinaBusinessProcess;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 @RestController
 @RequestMapping("/api")
 public class OficinaController {
@@ -32,5 +37,16 @@ public class OficinaController {
 	@GetMapping("/inscricoes")
 	public List<Map<String, Object>> listarInscricoes() {
 		return oficinaBusinessProcess.listarInscricoes();
+	}
+	@PostMapping("/inscricoes")
+	public ResponseEntity<Void> registrarInscricao(
+	        @RequestBody Map<String, Long> dados) {
+
+	    Long participanteId = dados.get("participante_id");
+	    Long oficinaId = dados.get("oficina_id");
+
+	    oficinaBusinessProcess.registrarInscricao(participanteId, oficinaId);
+
+	    return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 }
