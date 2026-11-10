@@ -171,7 +171,7 @@ class OficinaBusinessProcessTest {
 	void criarInscricaoConsomeVaga() {
 		Map<String, Object> inscricao = Map.of("id", 1L, "situacao", "ATIVA");
 		when(participanteRepository.buscarPorId(1L)).thenReturn(Optional.of(Map.of("id", 1L)));
-		when(oficinaRepository.buscarPorId(2L)).thenReturn(Optional.of(Map.of("id", 2L)));
+		when(oficinaRepository.buscarPorIdComBloqueio(2L)).thenReturn(Optional.of(Map.of("id", 2L)));
 		when(oficinaRepository.consumirVaga(2L)).thenReturn(true);
 		when(inscricaoRepository.adicionar(1L, 2L)).thenReturn(inscricao);
 
@@ -192,7 +192,7 @@ class OficinaBusinessProcessTest {
 	@Test
 	void criarInscricaoSemOficinaRetorna404() {
 		when(participanteRepository.buscarPorId(1L)).thenReturn(Optional.of(Map.of("id", 1L)));
-		when(oficinaRepository.buscarPorId(99L)).thenReturn(Optional.empty());
+		when(oficinaRepository.buscarPorIdComBloqueio(99L)).thenReturn(Optional.empty());
 
 		assertEquals(HttpStatus.NOT_FOUND, assertThrows(
 				ResponseStatusException.class,
@@ -202,7 +202,7 @@ class OficinaBusinessProcessTest {
 	@Test
 	void criarInscricaoSemVagaRetornaConflito() {
 		when(participanteRepository.buscarPorId(1L)).thenReturn(Optional.of(Map.of("id", 1L)));
-		when(oficinaRepository.buscarPorId(2L)).thenReturn(Optional.of(Map.of("id", 2L)));
+		when(oficinaRepository.buscarPorIdComBloqueio(2L)).thenReturn(Optional.of(Map.of("id", 2L)));
 		when(oficinaRepository.consumirVaga(2L)).thenReturn(false);
 
 		ResponseStatusException exception = assertThrows(
@@ -235,5 +235,26 @@ class OficinaBusinessProcessTest {
 				() -> oficinaBusinessProcess.excluirInscricao(3L));
 
 		assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+	}
+
+	@Test
+	void rejeitaInscricaoAtivaDuplicada() {
+		when(participanteRepository.buscarPorId(1L)).thenReturn(Optional.of(Map.of("id", 1L)));
+		when(oficinaRepository.buscarPorIdComBloqueio(2L)).thenReturn(Optional.of(Map.of("id", 2L)));
+		when(inscricaoRepository.existeAtiva(1L, 2L)).thenReturn(true);
+		ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+				() -> oficinaBusinessProcess.adicionarInscricao(1L, 2L));
+		assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+		org.mockito.Mockito.verify(oficinaRepository, org.mockito.Mockito.never()).consumirVaga(2L);
+	}
+
+	@Test
+	void naoAlteraCapacidadeQuandoExisteHistorico() {
+		when(oficinaRepository.buscarPorIdComBloqueio(2L)).thenReturn(Optional.of(
+				Map.of("id", 2L, "capacidade", 10, "vagas_disponiveis", 8)));
+		when(oficinaRepository.temHistorico(2L)).thenReturn(true);
+		ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+				() -> oficinaBusinessProcess.atualizarOficina(2L, "Java", 20));
+		assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
 	}
 }

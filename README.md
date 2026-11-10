@@ -154,6 +154,7 @@ Todas as rotas usam o prefixo `/api`.
 | `GET` | `/api/oficinas/ordenar` | Lista oficinas por ID crescente. |
 | `GET` | `/api/oficinas/{id}` | Busca uma oficina pelo ID. |
 | `POST` | `/api/oficinas` | Cadastra uma oficina (`titulo`, `capacidade`); as vagas iniciam iguais a capacidade. |
+| `PUT` | `/api/oficinas/{id}` | Atualiza titulo e capacidade; capacidade nao muda se houver historico. |
 | `DELETE` | `/api/oficinas/{id}` | Remove uma oficina sem inscricoes relacionadas. |
 | `GET` | `/api/inscricoes` | Lista o historico de inscricoes. |
 | `GET` | `/api/inscricoes/ordenar` | Lista inscricoes por ID crescente. |
@@ -198,6 +199,26 @@ curl -X DELETE http://localhost:8080/api/inscricoes/1
 Os exemplos com `curl` podem ser executados em Linux, macOS e Windows quando o `curl` estiver instalado.
 
 Para manter as vagas consistentes, criar uma inscricao e consumir sua vaga, assim como cancelar uma inscricao e devolver a vaga, sao operacoes transacionais. A exclusao de participante ou oficina referenciada por inscricoes e rejeitada pelo banco.
+
+## Integrantes
+
+- Barbara
+- Hitalo
+- Joedson
+- Julia
+- Leticia
+
+## Algoritmos em memoria
+
+A classe `utils.Oficina` oferece busca linear por ID, que percorre a lista elemento a elemento, e busca binaria por ID, que divide a busca em uma lista ja ordenada. O metodo `ordenarPorId` usa Bubble Sort para ordenar em ordem crescente; a lista deve ser ordenada antes de chamar a busca binaria. As rotas `/ordenar` usam o Bubble Sort por ID. As consultas por ID da API usam SQL, nao as buscas em memoria.
+
+## Refatoracao e testes
+
+A validacao de duplicidade foi separada em `existeAtiva` no repositorio, enquanto a regra de impedir o cadastro fica na camada de regras. O teste `rejeitaInscricaoAtivaDuplicada` verifica que o sistema rejeita a inscricao e nao consome vaga. Os testes com mocks nao comprovam transacoes reais nem concorrencia no PostgreSQL.
+
+## Uso de inteligencia artificial
+
+O grupo utilizou assistencia de inteligencia artificial para apoiar revisao, sugestoes de codigo, testes e documentacao. O grupo deve revisar e entender as alteracoes antes de entregar.
 
 ## Arquitetura
 
