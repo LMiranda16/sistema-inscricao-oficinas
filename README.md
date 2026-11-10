@@ -1,26 +1,24 @@
 # Sistema de Inscricao em Oficinas
 
-Uma API REST feita com Spring Boot para consultar participantes, gerenciar oficinas e registrar/cancelar inscricoes. O projeto usa Java 21, Maven e PostgreSQL.
+Uma API REST feita com Spring Boot para consultar participantes, oficinas e inscricoes. O projeto usa Java 21, Maven e PostgreSQL.
 
 > Feito para organizar oficinas sem perder o historico das inscricoes. Bora! :-)
 
 ## O que a API faz?
 
-- Consulta participantes e oficinas.
-- Cadastra, edita e exclui oficinas, respeitando o historico de inscricoes.
-- Registra inscricoes e controla as vagas disponiveis.
-- Cancela inscricoes sem apagar o historico.
-- Ordena a lista de oficinas pela quantidade de vagas disponiveis, da maior para a menor.
+- Lista participantes, oficinas e inscricoes.
 
-Sem pagamentos, certificados, lista de espera ou controle de conflitos de agenda. `:-P`
+No momento, a API implementa somente consultas de listas. Cadastro, consulta por ID, edicao e exclusao de oficinas, assim como criacao e cancelamento de inscricoes, ainda nao estao implementados.
 
 ## Tecnologias
 
 - Java 21
-- Spring Boot 4
+- Spring Boot 4.1.2
 - Spring Web MVC
-- Spring JDBC (`JdbcTemplate`)
+- Spring JDBC (`JdbcTemplate`), fornecido pelas dependencias Spring Boot
+- Spring Session JDBC (dependencia presente; nao ha funcionalidade de sessao exposta pela API)
 - PostgreSQL
+- JUnit Jupiter, Mockito e Spring MVC Test (testes)
 - Maven Wrapper
 
 ## Pre-requisitos
@@ -94,80 +92,18 @@ Todas as rotas usam o prefixo `/api`.
 | Metodo | Rota | Descricao |
 | --- | --- | --- |
 | `GET` | `/api/participantes` | Lista todos os participantes. |
-| `GET` | `/api/participantes/{id}` | Consulta um participante pelo ID. |
-| `POST` | `/api/oficinas` | Cadastra uma oficina; as vagas comecam iguais a capacidade. |
-| `GET` | `/api/oficinas` | Lista oficinas, ordenadas por vagas disponiveis decrescentes. |
-| `GET` | `/api/oficinas/{id}` | Consulta uma oficina pelo ID. |
-| `PUT` | `/api/oficinas/{id}` | Atualiza titulo e capacidade (com restricoes de historico). |
-| `DELETE` | `/api/oficinas/{id}` | Exclui uma oficina somente se nao houver inscricoes no historico. |
-| `POST` | `/api/inscricoes` | Registra uma inscricao e consome uma vaga. |
+| `GET` | `/api/oficinas` | Lista todas as oficinas. |
 | `GET` | `/api/inscricoes` | Lista o historico de inscricoes. |
-| `PATCH` | `/api/inscricoes/{id}/cancelamento` | Cancela uma inscricao ativa e devolve uma vaga. |
 
-### Exemplos de requisicao
-
-Cadastrar uma oficina:
-
-```http
-POST /api/oficinas
-Content-Type: application/json
-
-{
-  "titulo": "Introducao a programacao",
-  "capacidade": 20
-}
-```
-
-O servidor define `vagas_disponiveis` com o valor de `capacidade`.
-
-Registrar uma inscricao:
-
-```http
-POST /api/inscricoes
-Content-Type: application/json
-
-{
-  "participante_id": 1,
-  "oficina_id": 1
-}
-```
-
-Atualizar uma oficina:
-
-```http
-PUT /api/oficinas/1
-Content-Type: application/json
-
-{
-  "titulo": "Programacao para iniciantes",
-  "capacidade": 20
-}
-```
-
-Cancelar uma inscricao:
-
-```http
-PATCH /api/inscricoes/1/cancelamento
-```
-
-Tambem e possivel testar a API com PowerShell:
+As respostas sao listas em JSON. Exemplos de consulta com PowerShell:
 
 ```powershell
 Invoke-RestMethod http://localhost:8080/api/oficinas
-Invoke-RestMethod http://localhost:8080/api/participantes/1
+Invoke-RestMethod http://localhost:8080/api/participantes
+Invoke-RestMethod http://localhost:8080/api/inscricoes
 ```
 
-## Regras de negocio
-
-- Participante e oficina precisam existir para registrar uma inscricao.
-- A oficina precisa ter pelo menos uma vaga disponivel.
-- O mesmo participante nao pode ter duas inscricoes ativas na mesma oficina.
-- Criar uma inscricao e consumir sua vaga ocorre na mesma transacao.
-- Cancelar uma inscricao ativa e devolver sua vaga ocorre na mesma transacao.
-- Uma inscricao cancelada nao pode ser cancelada novamente; uma nova inscricao cria um novo registro no historico.
-- A capacidade nao pode ser alterada depois de existir historico de inscricoes; o titulo ainda pode ser editado.
-- Uma oficina com historico de inscricoes nao pode ser excluida.
-- Respostas de erro usam `400` para requisicao invalida, `404` para recurso inexistente e `409` para conflito com regras de negocio.
+As rotas retornam `200 OK` quando a consulta e concluida. Nao ha atualmente rotas de escrita nem consultas por ID.
 
 ## Arquitetura
 
@@ -176,9 +112,9 @@ controller -> businessprocess -> repository -> PostgreSQL
 ```
 
 - `controller`: rotas HTTP e formatos das requisicoes.
-- `businessprocess`: regras de negocio, ordenacao e coordenacao das transacoes.
+- `businessprocess`: encaminha as consultas para os repositorios.
 - `repository`: consultas SQL e acesso ao banco com `JdbcTemplate`.
-- `controller` chama somente `businessprocess`; somente `repository` acessa o banco. Cada camada no seu quadrado! `B-)`
+- `controller` chama somente `businessprocess`; somente `repository` acessa o banco.
 
 ## Testes
 
@@ -188,7 +124,7 @@ Os testes unitarios usam mocks e nao precisam conectar ao PostgreSQL:
 .\mvnw.cmd test
 ```
 
-Eles cobrem as rotas REST, a delegacao entre camadas e cenarios principais das regras de inscricao e oficinas. Como usam mocks, nao validam integracao real com PostgreSQL, bloqueios concorrentes ou rollback do banco.
+Os testes do controller usam mocks para verificar as tres rotas de consulta e nao precisam conectar ao PostgreSQL. Eles nao validam a integracao real com o banco.
 
 ## Estrutura do projeto
 
@@ -197,8 +133,8 @@ src/
   main/
     java/api_oficina/com/example/oficina_api_demo/
       businessprocess/  # regras de negocio
-      controller/       # endpoints e DTOs
-      repository/       # acesso JDBC
+      controller/       # endpoints REST
+      repository/       # consultas SQL e acesso JDBC
     resources/
       application.properties
   test/
