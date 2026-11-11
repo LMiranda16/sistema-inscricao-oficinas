@@ -1,0 +1,50 @@
+{
+  "info": {
+    "name": "Oficinas - testes adicionais",
+    "description": "Colecao adicional de exemplo; nao substitui a colecao oficial da professora. Configure baseUrl e idOficina.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "idOficina",
+      "value": "999999999"
+    }
+  ],
+  "item": [
+    {
+      "name": "Teste extra - oficina inexistente retorna 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/oficinas/{{idOficina}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "oficinas",
+            "{{idOficina}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Oficina inexistente retorna 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
