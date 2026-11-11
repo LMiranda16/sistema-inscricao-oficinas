@@ -32,6 +32,12 @@ public class InscricaoRepository {
 				participanteId, oficinaId);
 	}
 
+	public boolean existeAtiva(Long participanteId, Long oficinaId) {
+		return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+				"SELECT EXISTS (SELECT 1 FROM inscricoes WHERE participante_id = ? AND oficina_id = ? AND situacao = 'ATIVA')",
+				Boolean.class, participanteId, oficinaId));
+	}
+
 	public boolean cancelar(Long id) {
 		return jdbcTemplate.update(
 				"UPDATE inscricoes SET situacao = 'CANCELADA' WHERE id = ? AND situacao = 'ATIVA'",

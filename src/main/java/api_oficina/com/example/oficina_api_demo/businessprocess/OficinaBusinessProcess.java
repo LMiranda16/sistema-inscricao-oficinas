@@ -43,21 +43,21 @@ public class OficinaBusinessProcess {
 	}
 
 	public List<Map<String, Object>> listarParticipantesOrdenados() {
-		List<Map<String, Object>> participantes = new ArrayList<>(participanteRepository.listarTodos());
-		Oficina.ordenarPorId(participantes, participante -> ((Number) participante.get("id")).longValue());
-		return participantes;
+		return ordenarPorId(participanteRepository.listarTodos());
 	}
 
 	public List<Map<String, Object>> listarOficinasOrdenadas() {
-		List<Map<String, Object>> oficinas = new ArrayList<>(oficinaRepository.listarTodos());
-		Oficina.ordenarPorId(oficinas, oficina -> ((Number) oficina.get("id")).longValue());
-		return oficinas;
+		return ordenarPorId(oficinaRepository.listarTodos());
 	}
 
 	public List<Map<String, Object>> listarInscricoesOrdenadas() {
-		List<Map<String, Object>> inscricoes = new ArrayList<>(inscricaoRepository.listarTodos());
-		Oficina.ordenarPorId(inscricoes, inscricao -> ((Number) inscricao.get("id")).longValue());
-		return inscricoes;
+		return ordenarPorId(inscricaoRepository.listarTodos());
+	}
+
+	private List<Map<String, Object>> ordenarPorId(List<Map<String, Object>> registros) {
+		List<Map<String, Object>> copia = new ArrayList<>(registros);
+		Oficina.ordenarPorId(copia, registro -> ((Number) registro.get("id")).longValue());
+		return copia;
 	}
 
 	public Map<String, Object> buscarParticipante(Long id) {
@@ -97,6 +97,22 @@ public class OficinaBusinessProcess {
 		}
 	}
 
+	@Transactional
+	public Map<String, Object> atualizarOficina(Long id, String titulo, Integer capacidade) {
+		if (titulo == null || titulo.isBlank() || titulo.length() > 150 || capacidade == null || capacidade <= 0) {
+			throw requisicaoInvalida("Titulo e capacidade valida sao obrigatorios.");
+		}
+		Map<String, Object> oficina = oficinaRepository.buscarPorIdComBloqueio(id)
+				.orElseThrow(() -> naoEncontrado("Oficina"));
+		int anterior = ((Number) oficina.get("capacidade")).intValue();
+		boolean historico = oficinaRepository.temHistorico(id);
+		if (historico && anterior != capacidade) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Nao e possivel alterar a capacidade de oficina com historico.");
+		}
+		int vagas = historico ? ((Number) oficina.get("vagas_disponiveis")).intValue() : capacidade;
+		return oficinaRepository.atualizar(id, titulo.trim(), capacidade, vagas);
+	}
+
 	public Map<String, Object> buscarInscricao(Long id) {
 		return inscricaoRepository.buscarPorId(id)
 				.orElseThrow(() -> naoEncontrado("Inscricao"));
@@ -109,8 +125,11 @@ public class OficinaBusinessProcess {
 		}
 		participanteRepository.buscarPorId(participanteId)
 				.orElseThrow(() -> naoEncontrado("Participante"));
-		oficinaRepository.buscarPorId(oficinaId)
+		oficinaRepository.buscarPorIdComBloqueio(oficinaId)
 				.orElseThrow(() -> naoEncontrado("Oficina"));
+		if (inscricaoRepository.existeAtiva(participanteId, oficinaId)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Participante ja inscrito nesta oficina.");
+		}
 		if (!oficinaRepository.consumirVaga(oficinaId)) {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "A oficina nao tem vagas disponiveis.");
 		}

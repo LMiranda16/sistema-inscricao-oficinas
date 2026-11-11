@@ -26,6 +26,21 @@ public class OficinaRepository {
 				.findFirst();
 	}
 
+	public Optional<Map<String, Object>> buscarPorIdComBloqueio(Long id) {
+		return jdbcTemplate.queryForList("SELECT * FROM oficinas WHERE id = ? FOR UPDATE", id)
+				.stream().findFirst();
+	}
+
+	public boolean temHistorico(Long id) {
+		return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+				"SELECT EXISTS (SELECT 1 FROM inscricoes WHERE oficina_id = ?)", Boolean.class, id));
+	}
+
+	public Map<String, Object> atualizar(Long id, String titulo, int capacidade, int vagas) {
+		return jdbcTemplate.queryForMap("UPDATE oficinas SET titulo = ?, capacidade = ?, vagas_disponiveis = ? WHERE id = ? RETURNING *",
+				titulo, capacidade, vagas, id);
+	}
+
 	public Map<String, Object> adicionar(String titulo, int capacidade) {
 		return jdbcTemplate.queryForMap(
 				"INSERT INTO oficinas (titulo, capacidade, vagas_disponiveis) VALUES (?, ?, ?) RETURNING *",

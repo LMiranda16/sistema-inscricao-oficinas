@@ -154,6 +154,7 @@ Todas as rotas usam o prefixo `/api`.
 | `GET` | `/api/oficinas/ordenar` | Lista oficinas por ID crescente. |
 | `GET` | `/api/oficinas/{id}` | Busca uma oficina pelo ID. |
 | `POST` | `/api/oficinas` | Cadastra uma oficina (`titulo`, `capacidade`); as vagas iniciam iguais a capacidade. |
+| `PUT` | `/api/oficinas/{id}` | Atualiza titulo e capacidade; capacidade nao muda se houver historico. |
 | `DELETE` | `/api/oficinas/{id}` | Remove uma oficina sem inscricoes relacionadas. |
 | `GET` | `/api/inscricoes` | Lista o historico de inscricoes. |
 | `GET` | `/api/inscricoes/ordenar` | Lista inscricoes por ID crescente. |
@@ -198,6 +199,32 @@ curl -X DELETE http://localhost:8080/api/inscricoes/1
 Os exemplos com `curl` podem ser executados em Linux, macOS e Windows quando o `curl` estiver instalado.
 
 Para manter as vagas consistentes, criar uma inscricao e consumir sua vaga, assim como cancelar uma inscricao e devolver a vaga, sao operacoes transacionais. A exclusao de participante ou oficina referenciada por inscricoes e rejeitada pelo banco.
+
+## Integrantes
+
+- Barbara
+- Hitalo
+- Joedson
+- Julia
+- Leticia
+
+## Algoritmos em memoria
+
+A classe `utils.Oficina` oferece busca linear por ID, que percorre a lista elemento a elemento, e busca binaria por ID, que divide a busca em uma lista ja ordenada. O metodo `ordenarPorId` usa Bubble Sort para ordenar em ordem crescente; a lista deve ser ordenada antes de chamar a busca binaria. As rotas `/ordenar` usam o Bubble Sort por ID. As consultas por ID da API usam SQL, nao as buscas em memoria.
+
+## Refatoracao e testes
+
+As tres listagens ordenadas repetiam a criacao de uma copia e a chamada ao Bubble Sort. Essa logica foi reunida no metodo `ordenarPorId` do business process. O teste `ordenaAsTresEntidadesPorIdCrescenteSemAlterarAsListasDoRepository` verifica a ordem das tres listagens e que as listas originais nao sao modificadas. O teste `rejeitaInscricaoAtivaDuplicada` verifica a regra de duplicidade. Os testes com mocks nao comprovam transacoes reais nem concorrencia no PostgreSQL.
+
+## Uso de inteligencia artificial
+
+Este projeto utilizou assistencia de inteligencia artificial na revisao e em sugestoes de codigo, testes e documentacao. O grupo deve revisar as alteracoes e e responsavel pelo trabalho.
+
+## Postman e validacao
+
+A colecao em `postman/Oficinas-Testes-Adicionais.postman_collection.json` contem um teste extra para oficina inexistente. Ela nao substitui a colecao oficial. No Postman, importe o arquivo, confira `baseUrl` e use em `idOficina` um ID que nao exista no banco. Execute e confira o resultado em Test Results.
+
+Para impedir duplicatas tambem no banco, `sql/inscricao_ativa_unica.sql` fornece um indice opcional. Antes de aplica-lo, verifique se ha duplicatas e combine com o responsavel pelo banco. A API tambem verifica a duplicidade usando bloqueio da oficina durante a transacao.
 
 ## Arquitetura
 
