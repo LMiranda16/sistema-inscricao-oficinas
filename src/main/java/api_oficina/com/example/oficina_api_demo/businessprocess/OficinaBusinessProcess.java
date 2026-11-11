@@ -43,21 +43,21 @@ public class OficinaBusinessProcess {
 	}
 
 	public List<Map<String, Object>> listarParticipantesOrdenados() {
-		List<Map<String, Object>> participantes = new ArrayList<>(participanteRepository.listarTodos());
-		Oficina.ordenarPorId(participantes, participante -> ((Number) participante.get("id")).longValue());
-		return participantes;
+		return ordenarPorId(participanteRepository.listarTodos());
 	}
 
 	public List<Map<String, Object>> listarOficinasOrdenadas() {
-		List<Map<String, Object>> oficinas = new ArrayList<>(oficinaRepository.listarTodos());
-		Oficina.ordenarPorId(oficinas, oficina -> ((Number) oficina.get("id")).longValue());
-		return oficinas;
+		return ordenarPorId(oficinaRepository.listarTodos());
 	}
 
 	public List<Map<String, Object>> listarInscricoesOrdenadas() {
-		List<Map<String, Object>> inscricoes = new ArrayList<>(inscricaoRepository.listarTodos());
-		Oficina.ordenarPorId(inscricoes, inscricao -> ((Number) inscricao.get("id")).longValue());
-		return inscricoes;
+		return ordenarPorId(inscricaoRepository.listarTodos());
+	}
+
+	private List<Map<String, Object>> ordenarPorId(List<Map<String, Object>> registros) {
+		List<Map<String, Object>> copia = new ArrayList<>(registros);
+		Oficina.ordenarPorId(copia, registro -> ((Number) registro.get("id")).longValue());
+		return copia;
 	}
 
 	public Map<String, Object> buscarParticipante(Long id) {

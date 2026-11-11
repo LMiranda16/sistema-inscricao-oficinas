@@ -214,11 +214,17 @@ A classe `utils.Oficina` oferece busca linear por ID, que percorre a lista eleme
 
 ## Refatoracao e testes
 
-A validacao de duplicidade foi separada em `existeAtiva` no repositorio, enquanto a regra de impedir o cadastro fica na camada de regras. O teste `rejeitaInscricaoAtivaDuplicada` verifica que o sistema rejeita a inscricao e nao consome vaga. Os testes com mocks nao comprovam transacoes reais nem concorrencia no PostgreSQL.
+As tres listagens ordenadas repetiam a criacao de uma copia e a chamada ao Bubble Sort. Essa logica foi reunida no metodo `ordenarPorId` do business process. O teste `ordenaAsTresEntidadesPorIdCrescenteSemAlterarAsListasDoRepository` verifica a ordem das tres listagens e que as listas originais nao sao modificadas. O teste `rejeitaInscricaoAtivaDuplicada` verifica a regra de duplicidade. Os testes com mocks nao comprovam transacoes reais nem concorrencia no PostgreSQL.
 
 ## Uso de inteligencia artificial
 
-O grupo utilizou assistencia de inteligencia artificial para apoiar revisao, sugestoes de codigo, testes e documentacao. O grupo deve revisar e entender as alteracoes antes de entregar.
+Este projeto utilizou assistencia de inteligencia artificial na revisao e em sugestoes de codigo, testes e documentacao. O grupo deve revisar as alteracoes e e responsavel pelo trabalho.
+
+## Postman e validacao
+
+A colecao em `postman/Oficinas-Testes-Adicionais.postman_collection.json` contem um teste extra para oficina inexistente. Ela nao substitui a colecao oficial. No Postman, importe o arquivo, confira `baseUrl` e use em `idOficina` um ID que nao exista no banco. Execute e confira o resultado em Test Results.
+
+Para impedir duplicatas tambem no banco, `sql/inscricao_ativa_unica.sql` fornece um indice opcional. Antes de aplica-lo, verifique se ha duplicatas e combine com o responsavel pelo banco. A API tambem verifica a duplicidade usando bloqueio da oficina durante a transacao.
 
 ## Arquitetura
 
